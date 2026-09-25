@@ -1,4 +1,4 @@
-# LSTM and GNN Routing
+# RiverGraphNet
 
 Standalone research code for testing a gridded ML runoff generator plus graph neural network routing model.
 
