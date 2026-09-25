@@ -1,20 +1,68 @@
-# RiverGraphNet
+# RiverGraphNet: Graph Learning for River Routing
 
-Standalone research code for testing a gridded ML runoff generator plus graph neural network routing model.
+Research software for learning how runoff moves through a directed river network,
+connecting gridded environmental data, physical network attributes, and graph neural networks.
 
-This repository is intentionally separated from the physics model code. It contains only the LSTM/temporal-convolution runoff models, graph-routing models, data loaders, preprocessing utilities, and training loop needed to test whether the routing architecture can learn streamflow from gridded meteorological inputs and a river/terrain graph.
+[Research overview](https://mfarmani95.github.io/Mfarmani/graphroutenet.html) ·
+[Graph construction](src/lstm_gnn_routing/routing_models/graph_builder.py) ·
+[Routing implementation](src/lstm_gnn_routing/routing_models/gnn_routing.py)
 
-## What This Repo Does
+![NGen river network and the graph used for neural routing](docs/figures/ngen_network_vs_gnn_graph.png)
 
-The workflow is:
+## Why This Project
 
-1. Load daily gridded meteorological forcing from yearly Zarr stores.
-2. Load static gridded fields such as `landmask`, `BOTSOIL2D`, `VEG2D`, or precomputed continuous fields.
-3. Load observed daily streamflow CSVs for gauge targets.
-4. Generate gridded runoff with a shared LSTM or temporal convolution model.
-5. Optionally transfer grid-cell runoff to routing graph nodes using a sparse source-to-target mapping.
-6. Route graph-node runoff to gauges with a GNN.
-7. Train with masked losses so missing streamflow observations do not contribute to loss.
+River connectivity determines how upstream runoff contributes to downstream flow.
+This project represents that connectivity explicitly, then trains graph-based
+routing models against observed streamflow. It combines scientific ML with the
+geospatial preprocessing needed to connect model grids, river networks, and gauges.
+
+## Two Supported Modeling Paths
+
+| Path | Runoff input | Purpose |
+| --- | --- | --- |
+| Routing with precomputed runoff | Externally generated runoff channels, including `RUNSF` and `RUNSB` | Study routing separately from runoff generation |
+| Learned runoff plus routing | Shared LSTM or temporal-convolution runoff model | Train runoff generation and routing in one workflow |
+
+The [model factory](src/lstm_gnn_routing/training/model_factory.py) supports both
+paths. The land-surface simulator itself is not included in this repository.
+The example training command below uses the learned-runoff configuration; it
+should not be assumed to reproduce every experiment on the research page.
+
+## Technical Contributions
+
+- Directed river-graph construction and physical node/edge descriptors.
+- Sparse transfer of gridded runoff to graph nodes.
+- Configurable GNN routing and temporal processing.
+- Masked training losses for missing streamflow observations.
+- Train-period scalers reused for validation and test data.
+- Geospatial preprocessing tools for forcing, graph construction, and visual quality control.
+
+## Workflow
+
+```text
+Meteorological forcing -> LSTM / temporal-convolution runoff --+
+                                                              |
+Externally generated runoff ----------------------------------+
+                                                              v
+                                           Grid-to-graph transfer
+                                                              v
+                                              GNN river routing
+                                                              v
+                                     Gauge predictions and evaluation
+```
+
+## Results and Reproducibility
+
+The [research page](https://mfarmani95.github.io/Mfarmani/graphroutenet.html)
+describes the Noah-MP-driven routing study and its RAPID comparison. Those results
+are experiment-specific; they are not presented here as verified outputs of the
+default configuration. The figure above illustrates network structure, not model skill.
+
+Training requires locally prepared forcing, static fields, gauge observations,
+a graph cache, and configuration paths appropriate to your environment. Installing
+the package alone does not download these data. Review the expected layout below
+before launching a training job. This is research software, not an operational
+flood warning system.
 
 ## Repository Layout
 
